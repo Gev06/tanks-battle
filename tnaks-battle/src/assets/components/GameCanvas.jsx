@@ -12,15 +12,28 @@ const CanvasGame = () => {
         canvas.width = 512;
         canvas.height = 512;
         
-        const player = {
+        const player1 = {
             x: 50,
             y: 50,
             size: 32,
             color: "green",
             speed: 2,
-            direction: "up"
+            direction: "up",
+            controls: { up: "w", down: "s", left: "a", right: "d", shoot: " " }
+        };
+
+        const player2 = {
+            x: 400,
+            y: 400,
+            size: 32,
+            color: "blue",
+            speed: 2,
+            direction: "up",
+            controls: { up: "ArrowUp", down: "ArrowDown", left: "ArrowLeft", right: "ArrowRight", shoot: "Enter" }
         };
         
+        const players = [player1, player2];
+
         const keys = {};
         const bullets = [];
         const bulletSpeed = 5;
@@ -29,20 +42,23 @@ const CanvasGame = () => {
         const handelKeyDown = (e) => {
             keys[e.key] = true;
 
-            if(e.key === "w") player.direction = "up";
-            if(e.key === "s") player.direction = "down";
-            if(e.key === "a") player.direction = "left";
-            if(e.key === "d") player.direction = "right";
+            for (const player of players) {
+                const { controls } = player;
 
-            if (e.key === " ") {
-                let dx = 0;
-                let dy = 0;
-                if(player.direction === "up") dy = -bulletSpeed;
-                if(player.direction === "down") dy = bulletSpeed;
-                if(player.direction === "left") dx = -bulletSpeed;
-                if(player.direction === "right") dx = bulletSpeed;
+                if (e.key === controls.up) player.direction = "up";
+                if (e.key === controls.down) player.direction = "down";
+                if (e.key === controls.left) player.direction = "left";
+                if (e.key === controls.right) player.direction = "right"; 
 
-                bullets.push({
+                if (e.key === controls.shoot) {
+                    let dx = 0;
+                    let dy = 0;
+                    if (player.direction === "up") dy = -bulletSpeed;
+                    if (player.direction === "down") dy = bulletSpeed;
+                    if (player.direction === "left") dx = -bulletSpeed;
+                    if (player.direction === "right") dx = bulletSpeed;
+
+                    bullets.push({
                     x: player.x + player.size / 2 - bulletSize / 2,
                     y: player.y + player.size / 2 -bulletSize / 2,
                     size: bulletSize,
@@ -50,24 +66,31 @@ const CanvasGame = () => {
                     dx,
                     dy
                 });
-            };
+            }
+        }
+    };
 
+        const handeleKeyUp = (e) => {
+            keys[e.key] = false;
         };
-        const handeleKeyUp = (e) => (keys[e.key] = false);
         
         window.addEventListener("keydown", handelKeyDown);
         window.addEventListener("keyup", handeleKeyUp);
         
         const update = () => {
-            if (keys["w"] && player.y > 0) player.y -= player.speed;
-            if (keys["s"] && player.y + player.size < canvas.height) player.y += player.speed;
-            if (keys["a"] && player.x > 0) player.x -= player.speed;
-            if (keys["d"] && player.x + player.size < canvas.width) player.x += player.speed;
+            for (const player of players) {
+                const { controls } = player;
 
-            for (let i = bullets.length -1; i >= 0; i--) {
+            if (keys[controls.up] && player.y > 0) player.y -= player.speed;
+            if (keys[controls.down] && player.y + player.size < canvas.height) player.y += player.speed;
+            if (keys[controls.left] && player.x > 0) player.x -= player.speed;
+            if (keys[controls.right] && player.x + player.size < canvas.width) player.x += player.speed;
+        }
+
+            for (let i = bullets.length - 1; i >= 0; i--) {
                 bullets[i].y += bullets[i].dy;
                 bullets[i].x += bullets[i].dx;
-                
+
                 if (
                     bullets[i].x < 0 || bullets[i].x > canvas.width || 
                     bullets[i].y < 0 || bullets[i].y > canvas.height
@@ -79,25 +102,18 @@ const CanvasGame = () => {
         
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // plaers
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.size, player.size);
-            // bullets
+
+            for (const player of players) {
+                ctx.fillStyle = player.color;
+                ctx.fillRect(player.x, player.y, player.size, player.size);
+            }
+            
             for (const bullet of bullets) {
                 ctx.fillStyle = bullet.color;
                 ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size); 
             }
         };
 
-        setInterval(() => {
-            enemies.push({
-                x: Math.random() * (canvas.width - 30),
-                y: -30,
-                size: 30,
-                color: "purple",
-                speed: 1 + Math.random() * 1.5
-            });
-        }, 2000);
         
         const loop = () => {
             update();
