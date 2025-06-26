@@ -47,8 +47,11 @@ const CanvasGame = () => {
         };
 
         const walls = [
-            { x: 150, y: 150, width: 100, height: 20 },
-            { x: 300, y: 100, width: 20, height: 120 },
+            { x: 350, y: 70, width: 100, height: 20 },
+            { x: 140, y: 100, width: 20, height: 120 },
+            { x: 330, y: 300, width: 20, height: 120 },
+            { x: 80, y: 420, width: 100, height: 20 },
+            { x: 215, y: 215, width: 70, height: 70 }
         ];
 
         const players = [player1, player2];
@@ -92,7 +95,7 @@ const CanvasGame = () => {
                         x: player.x + player.size / 2 - bulletSize / 2,
                         y: player.y + player.size / 2 - bulletSize / 2,
                         size: bulletSize,
-                        color: "red",
+                        color: "black",
                         dx,
                         dy,
                         owner: player
@@ -120,22 +123,27 @@ const CanvasGame = () => {
             for (const player of players) {
                 const { controls } = player;
 
-                let newX = player.x;
-                let newY = player.y;
-
-                if (keys[controls.up]) newY -= player.speed;
-                if (keys[controls.down]) newY += player.speed;
+               let newX = player.x;
                 if (keys[controls.left]) newX -= player.speed;
                 if (keys[controls.right]) newX += player.speed;
 
                 if (
                     newX >= 0 &&
                     newX + player.size <= canvas.width &&
-                    newY >= 0 &&
-                    newY + player.size <= canvas.height &&
-                    !isCollidingWithWall(newX, newY, player.size)
+                    !isCollidingWithWall(newX, player.y, player.size)
                 ) {
                     player.x = newX;
+                }
+
+                let newY = player.y;
+                if (keys[controls.up]) newY -= player.speed;
+                if (keys[controls.down]) newY += player.speed;
+
+                if (
+                    newY >= 0 &&
+                    newY + player.size <= canvas.height &&
+                    !isCollidingWithWall(player.x, newY, player.size)
+                ) {
                     player.y = newY;
                 }
             }
@@ -176,7 +184,7 @@ const CanvasGame = () => {
                 }
             }
 
-            if (player1.score >= 10) {
+            if (player1.score >= 3) {
                 gameOver = true;
                 winner = "Player 1";
                 setGameState("gameover");
@@ -191,7 +199,26 @@ const CanvasGame = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             for (const player of players) {
-                ctx.drawImage(tankImg, player.x, player.y, player.size, player.size);
+                ctx.save();
+                ctx.translate(player.x + player.size / 2, player.y + player.size / 2);
+
+                switch (player.direction) {
+                    case "up":
+                        ctx.rotate(Math.PI);
+                        break;
+                        case "right":
+                        ctx.rotate(-Math.PI / 2);
+                        break;
+                        case "down":
+                        ctx.rotate(0);
+                        break;
+                        case "left":
+                      ctx.rotate(Math.PI / 2);
+                        break;
+                }
+
+                ctx.drawImage(tankImg, -player.size / 2, -player.size / 2, player.size, player.size);
+                ctx.restore();
             }
 
             for (const bullet of bullets) {
@@ -212,6 +239,7 @@ const CanvasGame = () => {
             if (gameOver) drawWinner();
         };
 
+
         const tankImg = new Image();
         tankImg.src = tankImgSrc;
 
@@ -226,7 +254,7 @@ const CanvasGame = () => {
         tankImg.onload = () => {
             window.addEventListener("keydown", handleKeyDown);
             window.addEventListener("keyup", handleKeyUp);
-            loop(); // запускаем игру только после загрузки картинки
+            loop();
         };
 
         return () => {

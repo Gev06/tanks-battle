@@ -1,31 +1,31 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+canvas {
+    display: block;
+    margin: 20px auto;
+}
 /* ------RES BUTTON------- */
+
+
+.res-btn {
+    background-color: #23a312;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.res-btn:hover {
+  background-color: #0da014;
+}
 
 .res-btn {
     position: relative;
     top: 50px;
-    right: 300px;
+    right: 0px;
 }
 
-
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f0f0f0;
-}
-
-canvas {
-  display: block;
-  margin: 20px auto;
-}
-
-.res-btn {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
-}
-
-.res-btn:hover {
-  background-color: #0056b3;
-}
