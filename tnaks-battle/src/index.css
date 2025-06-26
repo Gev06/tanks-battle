@@ -1,0 +1,31 @@
+/* ------RES BUTTON------- */
+
+.res-btn {
+    position: relative;
+    top: 50px;
+    right: 300px;
+}
+
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f0f0f0;
+}
+
+canvas {
+  display: block;
+  margin: 20px auto;
+}
+
+.res-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+.res-btn:hover {
+  background-color: #0056b3;
+}

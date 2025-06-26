@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
+import tankImgSrc from "../images/KV-2_preview.png";
+
 const CanvasGame = () => {
     const canvasRef = useRef(null);
     const [gameState, setGameState] = useState("playing");
@@ -16,7 +18,6 @@ const CanvasGame = () => {
             x: 50,
             y: 50,
             size: 32,
-            color: "green",
             speed: 2,
             direction: "up",
             score: 0,
@@ -33,7 +34,6 @@ const CanvasGame = () => {
             x: 400,
             y: 400,
             size: 32,
-            color: "blue",
             speed: 2,
             direction: "up",
             score: 0,
@@ -190,34 +190,30 @@ const CanvasGame = () => {
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Игроки
             for (const player of players) {
-                ctx.fillStyle = player.color;
-                ctx.fillRect(player.x, player.y, player.size, player.size);
+                ctx.drawImage(tankImg, player.x, player.y, player.size, player.size);
             }
 
-            // Пули
             for (const bullet of bullets) {
                 ctx.fillStyle = bullet.color;
                 ctx.fillRect(bullet.x, bullet.y, bullet.size, bullet.size);
             }
 
-            // Стены
             for (const wall of walls) {
                 ctx.fillStyle = "gray";
                 ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
             }
 
-            // Очки
             ctx.fillStyle = "black";
             ctx.font = "16px Arial";
             ctx.fillText(`Player 1: ${player1.score}`, 10, 20);
             ctx.fillText(`Player 2: ${player2.score}`, 10, 40);
 
-            if (gameOver) {
-                drawWinner();
-            }
+            if (gameOver) drawWinner();
         };
+
+        const tankImg = new Image();
+        tankImg.src = tankImgSrc;
 
         const loop = () => {
             update();
@@ -227,10 +223,11 @@ const CanvasGame = () => {
             }
         };
 
-        window.addEventListener("keydown", handleKeyDown);
-        window.addEventListener("keyup", handleKeyUp);
-
-        loop();
+        tankImg.onload = () => {
+            window.addEventListener("keydown", handleKeyDown);
+            window.addEventListener("keyup", handleKeyUp);
+            loop(); // запускаем игру только после загрузки картинки
+        };
 
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
@@ -242,7 +239,7 @@ const CanvasGame = () => {
         <div style={{ textAlign: "center" }}>
             <canvas ref={canvasRef} style={{ border: "1px solid black" }} />
             {gameState === "gameover" && (
-                <button
+                <button className="res-btn"
                     onClick={() => {
                         setRestartTrigger(prev => prev + 1);
                         setGameState("playing");
@@ -254,7 +251,7 @@ const CanvasGame = () => {
                         cursor: "pointer"
                     }}
                 >
-                    Сыграть заново
+                    restart
                 </button>
             )}
         </div>
