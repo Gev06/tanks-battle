@@ -6,8 +6,12 @@ const CanvasGame = () => {
     const canvasRef = useRef(null);
     const [gameState, setGameState] = useState("playing");
     const [restartTrigger, setRestartTrigger] = useState(0);
+    const [round, setRound] = useState(1);
+    const player1Ref = useRef();
+    const player2Ref = useRef();
 
     useEffect(() => {
+
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
 
@@ -21,6 +25,8 @@ const CanvasGame = () => {
             speed: 2,
             direction: "up",
             score: 0,
+            ammo: 5,
+            maxAmmo: 5,
             controls: {
                 up: "w",
                 down: "s",
@@ -37,6 +43,8 @@ const CanvasGame = () => {
             speed: 2,
             direction: "up",
             score: 0,
+            ammo: 5,
+            maxAmmo: 5,
             controls: {
                 up: "ArrowUp",
                 down: "ArrowDown",
@@ -45,6 +53,9 @@ const CanvasGame = () => {
                 shoot: "Enter"
             }
         };
+
+        player1Ref.current = player1;
+        player2Ref.current = player2;
 
         const walls = [
             { x: 350, y: 70, width: 100, height: 20 },
@@ -78,31 +89,34 @@ const CanvasGame = () => {
             for (const player of players) {
                 const { controls } = player;
 
-                if (e.key === controls.up) player.direction = "up";
-                if (e.key === controls.down) player.direction = "down";
-                if (e.key === controls.left) player.direction = "left";
-                if (e.key === controls.right) player.direction = "right";
+            if (e.key === controls.up) player.direction = "up";
+            if (e.key === controls.down) player.direction = "down";
+            if (e.key === controls.left) player.direction = "left";
+            if (e.key === controls.right) player.direction = "right";
 
-                if (e.key === controls.shoot && !gameOver) {
-                    let dx = 0;
-                    let dy = 0;
-                    if (player.direction === "up") dy = -bulletSpeed;
-                    if (player.direction === "down") dy = bulletSpeed;
-                    if (player.direction === "left") dx = -bulletSpeed;
-                    if (player.direction === "right") dx = bulletSpeed;
+        if (e.key === controls.shoot && !gameOver) {
+            if (player.ammo <= 0) return;
+                player.ammo--;
 
-                    bullets.push({
-                        x: player.x + player.size / 2 - bulletSize / 2,
-                        y: player.y + player.size / 2 - bulletSize / 2,
-                        size: bulletSize,
-                        color: "black",
-                        dx,
-                        dy,
-                        owner: player
-                    });
-                }
-            }
-        };
+            let dx = 0;
+            let dy = 0;
+            if (player.direction === "up") dy = -bulletSpeed;
+            if (player.direction === "down") dy = bulletSpeed;
+            if (player.direction === "left") dx = -bulletSpeed;
+            if (player.direction === "right") dx = bulletSpeed;
+
+            bullets.push({
+                x: player.x + player.size / 2 - bulletSize / 2,
+                y: player.y + player.size / 2 - bulletSize / 2,
+                size: bulletSize,
+                color: "black",
+                dx,
+                dy,
+                owner: player
+            });
+        }
+    }
+};
 
         const handleKeyUp = (e) => {
             keys[e.key] = false;
@@ -176,23 +190,51 @@ const CanvasGame = () => {
 
                 if (hit) continue;
 
+                let collidedWithWall = walls.some(wall =>
+                    bullet.x < wall.x + wall.width &&
+                    bullet.x + bullet.size > wall.x &&
+                    bullet.y < wall.y + wall.height &&
+                    bullet.y + bullet.size > wall.y
+                );
+
                 if (
                     bullet.x < 0 || bullet.x > canvas.width ||
-                    bullet.y < 0 || bullet.y > canvas.height
+                    bullet.y < 0 || bullet.y > canvas.height ||
+                    collidedWithWall
                 ) {
-                    bullets.splice(i, 1);
+                    bullets.splice(i, 1); 
                 }
             }
 
-            if (player1.score >= 3) {
-                gameOver = true;
-                winner = "Player 1";
-                setGameState("gameover");
-            } else if (player2.score >= 10) {
-                gameOver = true;
-                winner = "Player 2";
-                setGameState("gameover");
-            }
+                if (player1.score >= 3) {
+                    gameOver = true;
+                    winner = "Player 1";
+                    setRound(prev => prev + 1);
+                    setGameState("gameover");
+                    setRound(prev => prev + 1);
+
+                    fetch("http://localhost:5000/api/score", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ player: "Player 1", score: 5 })
+                    });
+                } else if (player2.score >= 10) {
+                    gameOver = true;
+                    winner = "Player 2";
+                    setRound(prev => prev + 1);
+                    setGameState("gameover");
+                    setRound(prev => prev + 1);
+
+                    fetch("http://localhost:5000/api/score", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ player: "Player 1", score: 5 })
+                    });
+                }
         };
 
         const draw = () => {
@@ -231,10 +273,9 @@ const CanvasGame = () => {
                 ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
             }
 
-            ctx.fillStyle = "black";
-            ctx.font = "16px Arial";
-            ctx.fillText(`Player 1: ${player1.score}`, 10, 20);
-            ctx.fillText(`Player 2: ${player2.score}`, 10, 40);
+                
+
+                
 
             if (gameOver) drawWinner();
         };
@@ -242,6 +283,14 @@ const CanvasGame = () => {
 
         const tankImg = new Image();
         tankImg.src = tankImgSrc;
+
+        const reloadInterval = setInterval(() => {
+            for (const player of players) {
+                if (player.ammo < player.maxAmmo) {
+                    player.ammo++;
+                }
+            }
+        }, 2000);
 
         const loop = () => {
             update();
@@ -258,18 +307,30 @@ const CanvasGame = () => {
         };
 
         return () => {
+            clearInterval(reloadInterval);
             window.removeEventListener("keydown", handleKeyDown);
             window.removeEventListener("keyup", handleKeyUp);
         };
     }, [restartTrigger]);
 
+    const p1 = player1Ref.current;
+    const p2 = player2Ref.current;
+
+
+    
     return (
         <div style={{ textAlign: "center" }}>
+            <div style={{ marginBottom: "10px", fontSize: "18px", fontFamily: "monospace" }}>
+                🧨 Player 1: {p1?.score ?? 0} | Ammo: {p1?.ammo ?? 0}/{p1?.maxAmmo ?? 5} <br />
+                🧨 Player 2: {p2?.score ?? 0} | Ammo: {p2?.ammo ?? 0}/{p2?.maxAmmo ?? 5} <br />
+                🧨 Раунд: {round}
+            </div>
+
             <canvas ref={canvasRef} style={{ border: "1px solid black" }} />
             {gameState === "gameover" && (
-                <button className="res-btn"
+                <button
                     onClick={() => {
-                        setRestartTrigger(prev => prev + 1);
+                        setRestartTrigger(r => r + 1);
                         setGameState("playing");
                     }}
                     style={{
@@ -279,7 +340,7 @@ const CanvasGame = () => {
                         cursor: "pointer"
                     }}
                 >
-                    restart
+                    Restart
                 </button>
             )}
         </div>
